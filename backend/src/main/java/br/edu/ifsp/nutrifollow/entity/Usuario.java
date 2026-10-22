@@ -14,9 +14,11 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
-
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.Locale;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,15 +34,21 @@ public abstract class Usuario {
     private Long id;
 
     @NotBlank
+    @Size(max = 100)
+    @Column(length = 100, nullable = false)
     private String nome;
 
     @NotBlank
     @Email
+    @Size(max = 150)
+    @Column(length = 150, nullable = false)
     private String email;
 
     @NotBlank
+    @Column(name = "senha_hash", length = 60, nullable = false)
     private String senhaHash;
 
+    @Column(nullable = false)
     private Boolean ativo = true;
 
     @ManyToOne
@@ -68,6 +76,20 @@ public abstract class Usuario {
     }
 
     public void setNome(String nome) {
+        if (nome == null || nome.isBlank()) {
+            throw new IllegalArgumentException(
+                "O nome é obrigatório."
+            );
+        }
+
+        nome = nome.trim();
+
+        if (nome.length() > 100) {
+            throw new IllegalArgumentException(
+                "O nome deve ter no máximo 100 caracteres."
+            );
+        }
+
         this.nome = nome;
     }
 
@@ -76,6 +98,21 @@ public abstract class Usuario {
     }
 
     public void setEmail(String email) {
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException(
+                "O e-mail é obrigatório."
+            );
+        }
+
+        email = email.trim().toLowerCase(Locale.ROOT);
+
+        if (email.length() > 150
+            || !email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
+            throw new IllegalArgumentException(
+                "Informe um e-mail válido com até 150 caracteres."
+            );
+        }
+
         this.email = email;
     }
 
@@ -84,6 +121,12 @@ public abstract class Usuario {
     }
 
     public void setSenhaHash(String senhaHash) {
+        if (senhaHash == null || senhaHash.isBlank()) {
+            throw new IllegalArgumentException(
+                "O hash da senha é obrigatório."
+            );
+        }
+
         this.senhaHash = senhaHash;
     }
 
@@ -92,6 +135,12 @@ public abstract class Usuario {
     }
 
     public void setAtivo(Boolean ativo) {
+        if (ativo == null) {
+            throw new IllegalArgumentException(
+                "O estado da conta é obrigatório."
+            );
+        }
+
         this.ativo = ativo;
     }
 
@@ -120,6 +169,15 @@ public abstract class Usuario {
             );
         }
 
+        int tamanhoEmBytes =
+            novaSenha.getBytes(StandardCharsets.UTF_8).length;
+
+        if (tamanhoEmBytes > 72) {
+            throw new IllegalArgumentException(
+                "A senha excede o limite de 72 bytes do BCrypt."
+            );
+        }
+
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         this.senhaHash = passwordEncoder.encode(novaSenha);
     }
@@ -140,15 +198,31 @@ public abstract class Usuario {
             );
         }
 
-        if (email == null || email.isBlank()
-            || !email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
+        nome = nome.trim();
+
+        if (nome.length() > 100) {
             throw new IllegalArgumentException(
-                "Informe um e-mail válido."
+                "O nome deve ter no máximo 100 caracteres."
             );
         }
 
-        this.nome = nome.trim();
-        this.email = email.trim();
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException(
+                "O e-mail é obrigatório."
+            );
+        }
+
+        email = email.trim().toLowerCase(Locale.ROOT);
+
+        if (email.length() > 150
+            || !email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
+            throw new IllegalArgumentException(
+                "Informe um e-mail válido com até 150 caracteres."
+            );
+        }
+
+        this.nome = nome;
+        this.email = email;
     }
 
     public void inativar(Usuario autor, String motivo) {

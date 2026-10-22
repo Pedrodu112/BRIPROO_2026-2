@@ -1,8 +1,8 @@
 
 package br.edu.ifsp.nutrifollow.controller;
 
+import br.edu.ifsp.nutrifollow.dto.UsuarioCadastro;
 import br.edu.ifsp.nutrifollow.dto.UsuarioResposta;
-import br.edu.ifsp.nutrifollow.entity.Usuario;
 import br.edu.ifsp.nutrifollow.entity.UsuarioComum;
 import br.edu.ifsp.nutrifollow.service.UsuarioService;
 
@@ -25,9 +25,9 @@ public class UsuarioController {
 
     @PostMapping
     public UsuarioResposta cadastrar(
-        @Valid @RequestBody UsuarioComum usuario) {
+        @Valid @RequestBody UsuarioCadastro dados) {
 
-        Usuario usuarioSalvo = usuarioService.cadastrar(usuario);
+        UsuarioComum usuarioSalvo = usuarioService.cadastrar(dados);
 
         return new UsuarioResposta(
             usuarioSalvo.getId(),
