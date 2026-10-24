@@ -139,6 +139,10 @@ public class Publicacao {
         return id;
     }
 
+    public Profissional getAutor() {
+    return autor;
+}
+
     public LocalDateTime getPublicadaEm() {
         return publicadaEm;
     }
@@ -146,4 +150,22 @@ public class Publicacao {
     public LocalDateTime getInativadaEm() {
         return inativadaEm;
     }
+
+    
+    public String getTitulo() {
+        return titulo;
+    }
+
+    public String getConteudo() {
+        return conteudo;
+    }
+
+    public Boolean getAtiva() {
+        return ativa;
+    }
+
+    public String getMotivoInativacao() {
+        return motivoInativacao;
+    }
+
 }

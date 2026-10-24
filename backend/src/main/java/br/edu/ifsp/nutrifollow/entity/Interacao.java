@@ -311,4 +311,21 @@ public class Interacao {
     public LocalDateTime getLidaEm() {
         return lidaEm;
     }
+    
+    public void setPrazo(LocalDateTime prazo) {
+        this.prazo = prazo;
+    }
+
+    public void setSituacaoMeta(String situacaoMeta) {
+        if (situacaoMeta != null && situacaoMeta.trim().length() > 50) {
+            throw new IllegalArgumentException(
+                    "A situação da meta não pode ultrapassar 50 caracteres."
+            );
+        }
+
+        this.situacaoMeta = situacaoMeta == null
+                ? null
+                : situacaoMeta.trim();
+    }
+
 }

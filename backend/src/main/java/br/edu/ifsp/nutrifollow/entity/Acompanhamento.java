@@ -334,4 +334,8 @@ public class Acompanhamento {
     public String getMotivoEncerramento() {
         return motivoEncerramento;
     }
+
+    public Integer getId() {
+    return id;
+}
 }
