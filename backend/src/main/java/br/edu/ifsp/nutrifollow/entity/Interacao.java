@@ -1,13 +1,13 @@
 
 package br.edu.ifsp.nutrifollow.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Column;
+import jakarta.persistence.ManyToOne;
 
 import java.time.LocalDateTime;
 import java.util.Locale;
@@ -31,7 +31,7 @@ public class Interacao {
     private Usuario autor;
 
     @ManyToOne
-    @JoinColumn(name = "destinatario_id", nullable = false)
+    @JoinColumn(name = "destinatario_id")
     private Usuario destinatario;
 
     @Column(nullable = false, length = 2000)
@@ -39,6 +39,7 @@ public class Interacao {
 
     private LocalDateTime prazo;
 
+    @Column(length = 50)
     private String situacaoMeta;
 
     @Column(nullable = false)
@@ -62,16 +63,28 @@ public class Interacao {
         String tipoNormalizado = tipo.trim().toUpperCase(Locale.ROOT);
 
         if ("MENSAGEM".equals(tipoNormalizado)) {
-            return true;
+            return acompanhamento != null
+                && "ATIVO".equalsIgnoreCase(acompanhamento.getStatus())
+                && autor != null
+                && destinatario != null
+                && Boolean.TRUE.equals(autor.getAtivo())
+                && Boolean.TRUE.equals(destinatario.getAtivo())
+                && !autor.equals(destinatario);
+        }
+
+        if ("OBSERVACAO".equals(tipoNormalizado)) {
+            return autor instanceof Profissional
+                && acompanhamento != null
+                && autor.equals(acompanhamento.getProfissional());
         }
 
         if ("META".equals(tipoNormalizado)) {
-            return situacaoMeta != null
-                && !situacaoMeta.isBlank();
-        }
-
-        if ("LEMBRETE".equals(tipoNormalizado)) {
-            return prazo != null;
+            return autor instanceof Profissional
+                && acompanhamento != null
+                && autor.equals(acompanhamento.getProfissional())
+                && situacaoMeta != null
+                && !situacaoMeta.isBlank()
+                && situacaoMeta.trim().length() <= 50;
         }
 
         return false;
@@ -84,45 +97,82 @@ public class Interacao {
             );
         }
 
-        if (acompanhamento == null
-            || autor == null
-            || destinatario == null) {
+        if (acompanhamento == null || autor == null) {
             throw new IllegalStateException(
-                "O acompanhamento, o autor e o destinatário são obrigatórios."
+                "O acompanhamento e o autor são obrigatórios."
             );
         }
 
-        if (!Boolean.TRUE.equals(autor.getAtivo())
-            || !Boolean.TRUE.equals(destinatario.getAtivo())) {
+        if (!Boolean.TRUE.equals(autor.getAtivo())) {
             throw new IllegalStateException(
-                "O autor e o destinatário precisam estar ativos."
+                "O autor precisa estar ativo."
             );
         }
 
-        if (autor.equals(destinatario)) {
+        String tipoNormalizado = tipo == null
+            ? ""
+            : tipo.trim().toUpperCase(Locale.ROOT);
+
+        if ("MENSAGEM".equals(tipoNormalizado)) {
+            if (destinatario == null) {
+                throw new IllegalStateException(
+                    "A mensagem precisa ter um destinatário."
+                );
+            }
+
+            if (!Boolean.TRUE.equals(destinatario.getAtivo())) {
+                throw new IllegalStateException(
+                    "O destinatário precisa estar ativo."
+                );
+            }
+
+            if (autor.equals(destinatario)) {
+                throw new IllegalArgumentException(
+                    "O autor não pode ser o próprio destinatário."
+                );
+            }
+
+            boolean autorParticipa =
+                autor.equals(acompanhamento.getUsuario())
+                || autor.equals(acompanhamento.getProfissional());
+
+            boolean destinatarioParticipa =
+                destinatario.equals(acompanhamento.getUsuario())
+                || destinatario.equals(acompanhamento.getProfissional());
+
+            if (!autorParticipa || !destinatarioParticipa) {
+                throw new IllegalArgumentException(
+                    "Autor e destinatário precisam participar do acompanhamento."
+                );
+            }
+
+            if (!"ATIVO".equalsIgnoreCase(acompanhamento.getStatus())) {
+                throw new IllegalStateException(
+                    "Mensagens exigem um acompanhamento ativo."
+                );
+            }
+        } else if ("OBSERVACAO".equals(tipoNormalizado)
+            || "META".equals(tipoNormalizado)) {
+            if (!(autor instanceof Profissional)) {
+                throw new IllegalArgumentException(
+                    "Somente um profissional pode criar observações e metas."
+                );
+            }
+
+            if (destinatario != null) {
+                throw new IllegalArgumentException(
+                    "Observações e metas não devem ter destinatário."
+                );
+            }
+
+            if (!autor.equals(acompanhamento.getProfissional())) {
+                throw new IllegalArgumentException(
+                    "O autor precisa ser o profissional deste acompanhamento."
+                );
+            }
+        } else {
             throw new IllegalArgumentException(
-                "O autor não pode ser o próprio destinatário."
-            );
-        }
-
-        boolean autorParticipa =
-            autor.equals(acompanhamento.getUsuario())
-            || autor.equals(acompanhamento.getProfissional());
-
-        boolean destinatarioParticipa =
-            destinatario.equals(acompanhamento.getUsuario())
-            || destinatario.equals(acompanhamento.getProfissional());
-
-        if (!autorParticipa || !destinatarioParticipa) {
-            throw new IllegalArgumentException(
-                "Autor e destinatário precisam participar do acompanhamento."
-            );
-        }
-
-        if ("MENSAGEM".equalsIgnoreCase(tipo)
-            && !"ATIVO".equals(acompanhamento.getStatus())) {
-            throw new IllegalStateException(
-                "Mensagens exigem um acompanhamento ativo."
+                "O tipo da interação é inválido."
             );
         }
 
@@ -133,7 +183,6 @@ public class Interacao {
         }
 
         LocalDateTime agora = LocalDateTime.now();
-
         criadaEm = agora;
         atualizadaEm = agora;
         lidaEm = null;
@@ -143,6 +192,36 @@ public class Interacao {
         if (criadaEm == null) {
             throw new IllegalStateException(
                 "A interação precisa ser enviada antes de ser atualizada."
+            );
+        }
+
+        String tipoNormalizado = tipo == null
+            ? ""
+            : tipo.trim().toUpperCase(Locale.ROOT);
+
+        if ("MENSAGEM".equals(tipoNormalizado)) {
+            throw new IllegalStateException(
+                "Mensagens não podem ser editadas depois do envio."
+            );
+        }
+
+        if (!"OBSERVACAO".equals(tipoNormalizado)
+            && !"META".equals(tipoNormalizado)) {
+            throw new IllegalStateException(
+                "O tipo da interação é inválido."
+            );
+        }
+
+        if (!"ATIVO".equalsIgnoreCase(acompanhamento.getStatus())) {
+            throw new IllegalStateException(
+                "Não é possível alterar interações após o encerramento do acompanhamento."
+            );
+        }
+
+        if (!(autor instanceof Profissional)
+            || !autor.equals(acompanhamento.getProfissional())) {
+            throw new IllegalStateException(
+                "Somente o profissional responsável pode alterar esta interação."
             );
         }
 
@@ -158,16 +237,6 @@ public class Interacao {
             );
         }
 
-        String tipoNormalizado = tipo == null
-            ? ""
-            : tipo.trim().toUpperCase(Locale.ROOT);
-
-        if ("LEMBRETE".equals(tipoNormalizado) && prazo == null) {
-            throw new IllegalArgumentException(
-                "O lembrete precisa ter um prazo."
-            );
-        }
-
         if ("META".equals(tipoNormalizado)
             && (situacaoMeta == null || situacaoMeta.isBlank())) {
             throw new IllegalStateException(
@@ -175,16 +244,8 @@ public class Interacao {
             );
         }
 
-        if (!"MENSAGEM".equals(tipoNormalizado)
-            && !"META".equals(tipoNormalizado)
-            && !"LEMBRETE".equals(tipoNormalizado)) {
-            throw new IllegalStateException(
-                "O tipo da interação é inválido."
-            );
-        }
-
         this.conteudo = conteudo.trim();
-        this.prazo = prazo;
+        this.prazo = "META".equals(tipoNormalizado) ? prazo : null;
         this.atualizadaEm = LocalDateTime.now();
     }
 
@@ -192,6 +253,25 @@ public class Interacao {
         if (!"META".equalsIgnoreCase(tipo)) {
             throw new IllegalStateException(
                 "Somente uma interação do tipo META possui situação de meta."
+            );
+        }
+
+        if (criadaEm == null) {
+            throw new IllegalStateException(
+                "A meta precisa ser criada antes de atualizar sua situação."
+            );
+        }
+
+        if (!"ATIVO".equalsIgnoreCase(acompanhamento.getStatus())) {
+            throw new IllegalStateException(
+                "Não é possível alterar metas após o encerramento do acompanhamento."
+            );
+        }
+
+        if (!(autor instanceof Profissional)
+            || !autor.equals(acompanhamento.getProfissional())) {
+            throw new IllegalStateException(
+                "Somente o profissional responsável pode atualizar a meta."
             );
         }
 
@@ -212,10 +292,16 @@ public class Interacao {
     }
 
     public void marcarComoLida(Usuario destinatario) {
+        if (!"MENSAGEM".equalsIgnoreCase(tipo)) {
+            throw new IllegalStateException(
+                "Somente mensagens podem ser marcadas como lidas."
+            );
+        }
+
         if (destinatario == null
             || !destinatario.equals(this.destinatario)) {
             throw new IllegalArgumentException(
-                "Somente o destinatário pode marcar a interação como lida."
+                "Somente o destinatário pode marcar a mensagem como lida."
             );
         }
 
@@ -227,7 +313,7 @@ public class Interacao {
 
         if (criadaEm == null) {
             throw new IllegalStateException(
-                "A interação ainda não foi enviada."
+                "A mensagem ainda não foi enviada."
             );
         }
 
@@ -296,8 +382,24 @@ public class Interacao {
         return prazo;
     }
 
+    public void setPrazo(LocalDateTime prazo) {
+        this.prazo = prazo;
+    }
+
     public String getSituacaoMeta() {
         return situacaoMeta;
+    }
+
+    public void setSituacaoMeta(String situacaoMeta) {
+        if (situacaoMeta != null && situacaoMeta.trim().length() > 50) {
+            throw new IllegalArgumentException(
+                "A situação da meta não pode ultrapassar 50 caracteres."
+            );
+        }
+
+        this.situacaoMeta = situacaoMeta == null
+            ? null
+            : situacaoMeta.trim();
     }
 
     public LocalDateTime getCriadaEm() {
@@ -311,21 +413,4 @@ public class Interacao {
     public LocalDateTime getLidaEm() {
         return lidaEm;
     }
-    
-    public void setPrazo(LocalDateTime prazo) {
-        this.prazo = prazo;
-    }
-
-    public void setSituacaoMeta(String situacaoMeta) {
-        if (situacaoMeta != null && situacaoMeta.trim().length() > 50) {
-            throw new IllegalArgumentException(
-                    "A situação da meta não pode ultrapassar 50 caracteres."
-            );
-        }
-
-        this.situacaoMeta = situacaoMeta == null
-                ? null
-                : situacaoMeta.trim();
-    }
-
 }
