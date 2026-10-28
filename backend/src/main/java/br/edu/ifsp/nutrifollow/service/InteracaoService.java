@@ -33,7 +33,7 @@ public class InteracaoService {
 
     @Transactional
     public Interacao enviar(
-            Long acompanhamentoId,
+            Integer acompanhamentoId,
             Long autorId,
             Long destinatarioId,
             String tipo,
@@ -69,7 +69,7 @@ public class InteracaoService {
 
     @Transactional(readOnly = true)
     public List<Interacao> listarPorAcompanhamento(
-            Long acompanhamentoId,
+            Integer acompanhamentoId,
             Long usuarioId) {
 
         Acompanhamento acompanhamento = buscarAcompanhamento(
@@ -81,12 +81,12 @@ public class InteracaoService {
         validarParticipante(acompanhamento, usuario);
 
         return interacaoRepository.findAll()
-        .stream()
-        .filter(interacao ->
-                acompanhamentoId.equals(
-                        interacao.getAcompanhamento().getId().longValue()
+                .stream()
+                .filter(interacao ->
+                        acompanhamentoId.equals(
+                                interacao.getAcompanhamento().getId()
                 ))
-        .toList();
+                .toList();
     }
 
     @Transactional
@@ -143,18 +143,18 @@ public class InteracaoService {
         return interacaoRepository.save(interacao);
     }
 
-    private Acompanhamento buscarAcompanhamento(Long acompanhamentoId) {
+        private Acompanhamento buscarAcompanhamento(Integer acompanhamentoId) {
         if (acompanhamentoId == null) {
-            throw new IllegalArgumentException(
-                    "O identificador do acompanhamento é obrigatório."
-            );
+                throw new IllegalArgumentException(
+                        "O identificador do acompanhamento é obrigatório."
+                );
         }
 
         return acompanhamentoRepository.findById(acompanhamentoId)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Acompanhamento não encontrado."
                 ));
-    }
+        }
 
     private Usuario buscarUsuarioAtivo(Long usuarioId) {
         if (usuarioId == null) {

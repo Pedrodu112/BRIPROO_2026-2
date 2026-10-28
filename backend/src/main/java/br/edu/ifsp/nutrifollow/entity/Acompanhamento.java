@@ -337,5 +337,17 @@ public class Acompanhamento {
 
     public Integer getId() {
     return id;
-}
+    }
+
+    public String getFinalidade() {
+    return finalidade;
+    }
+
+    public LocalDateTime getAutorizadoEm() {
+        return autorizadoEm;
+    }
+
+    public Usuario getEncerradoPor() {
+        return encerradoPor;
+    }
 }
