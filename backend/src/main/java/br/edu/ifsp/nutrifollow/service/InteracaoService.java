@@ -46,7 +46,8 @@ public class InteracaoService {
         );
 
         Usuario autor = buscarUsuarioAtivo(autorId);
-        Usuario destinatario = buscarUsuarioAtivo(destinatarioId);
+        Usuario destinatario = destinatarioId == null ? null
+        : buscarUsuarioAtivo(destinatarioId);
 
         Interacao interacao = new Interacao();
 

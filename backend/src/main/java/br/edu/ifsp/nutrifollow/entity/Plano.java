@@ -171,21 +171,26 @@ public class Plano {
     }
 
     public void inativar(Usuario autor) {
-        if (autor == null || !Boolean.TRUE.equals(autor.getAtivo())) {
+        validarPlanoAtivo();
+
+        if (autor == null) {
             throw new IllegalArgumentException(
-                "O autor da inativação precisa estar ativo."
+                "O autor da operação é obrigatório."
             );
         }
 
-        if (!Boolean.TRUE.equals(this.ativo)) {
-            throw new IllegalStateException("O plano já está inativo.");
+        if (!Boolean.TRUE.equals(autor.getAtivo())) {
+            throw new IllegalArgumentException(
+                "O autor precisa estar ativo."
+            );
         }
 
-        if (!(autor instanceof Administrador)
-            && !(autor instanceof Profissional)
-            && !this.usuario.equals(autor)) {
+        boolean ehDono = autor.equals(this.usuario);
+        boolean ehAdministrador = autor instanceof Administrador;
+
+        if (!ehDono && !ehAdministrador) {
             throw new IllegalArgumentException(
-                "O autor não tem permissão para inativar este plano."
+                "Somente o dono do plano ou um administrador podem inativá-lo."
             );
         }
 
