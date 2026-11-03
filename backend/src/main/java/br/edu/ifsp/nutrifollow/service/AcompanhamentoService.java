@@ -57,9 +57,7 @@ public class AcompanhamentoService {
     public List<Acompanhamento> listarPorUsuario(Long usuarioId) {
         Usuario usuario = buscarUsuarioAtivo(usuarioId);
 
-        return acompanhamentoRepository.findAll().stream()
-                .filter(a -> a.getUsuario().getId().equals(usuario.getId()))
-                .toList();
+        return acompanhamentoRepository.findByUsuario_Id(usuario.getId());
     }
 
     @Transactional(readOnly = true)
@@ -72,9 +70,7 @@ public class AcompanhamentoService {
             );
         }
 
-        return acompanhamentoRepository.findAll().stream()
-                .filter(a -> a.getProfissional().getId().equals(profissional.getId()))
-                .toList();
+        return acompanhamentoRepository.findByProfissional_Id(profissional.getId());
     }
 
     @Transactional

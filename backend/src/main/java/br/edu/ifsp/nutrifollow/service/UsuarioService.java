@@ -28,6 +28,13 @@ public class UsuarioService {
         String nome = dados.nome().trim();
         String email = dados.email().trim().toLowerCase(Locale.ROOT);
 
+
+        if (dados.nome() == null || dados.email() == null || dados.senha() == null) {
+            throw new IllegalArgumentException(
+                "Nome, e-mail e senha são obrigatórios."
+            );
+        }
+        
         if (nome.isBlank()) {
             throw new IllegalArgumentException(
                 "O nome é obrigatório."

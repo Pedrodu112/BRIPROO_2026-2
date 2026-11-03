@@ -79,6 +79,12 @@ public class RegistroService {
                 usuarioId, registroId
         );
 
+        if (novosDados == null) {
+            throw new IllegalArgumentException(
+                "Os novos dados do registro são obrigatórios."
+            );
+        }   
+
         registro.corrigirRegistro(novosDados);
 
         return registroRepository.save(registro);

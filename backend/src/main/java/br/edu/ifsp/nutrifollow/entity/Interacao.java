@@ -53,10 +53,29 @@ public class Interacao {
     public Interacao() {
     }
 
-    public boolean validarConteudo() {
+    private void validarPermissaoProfissional(String operacao) {
+        if (!(autor instanceof Profissional profissional)) {
+            throw new IllegalStateException(
+                "Somente profissionais podem realizar esta operação."
+            );
+        }
+
+        if (acompanhamento == null
+            || !acompanhamento.permiteAcesso(
+                profissional,
+                "INTERACAO",
+                operacao
+            )) {
+            throw new IllegalStateException(
+                "O profissional não possui autorização para esta operação."
+            );
+        }
+    }
+
+        public boolean validarConteudo() {
         if (tipo == null || tipo.isBlank()
             || conteudo == null || conteudo.isBlank()
-            || conteudo.trim().length() > 2000) {
+            || conteudo.trim().length() > 2000 ) {
             return false;
         }
 
@@ -69,22 +88,36 @@ public class Interacao {
                 && destinatario != null
                 && Boolean.TRUE.equals(autor.getAtivo())
                 && Boolean.TRUE.equals(destinatario.getAtivo())
-                && !autor.equals(destinatario);
+                && !autor.equals(destinatario)
+                && (autor.equals(acompanhamento.getUsuario())
+                    || autor.equals(acompanhamento.getProfissional()))
+                && (destinatario.equals(acompanhamento.getUsuario())
+                    || destinatario.equals(acompanhamento.getProfissional()));
         }
 
         if ("OBSERVACAO".equals(tipoNormalizado)) {
-            return autor instanceof Profissional
-                && acompanhamento != null
-                && autor.equals(acompanhamento.getProfissional());
+            return acompanhamento != null
+                && "ATIVO".equalsIgnoreCase(acompanhamento.getStatus())
+                && destinatario == null
+                && autor instanceof Profissional profissional
+                && autor.equals(acompanhamento.getProfissional())
+                && acompanhamento.permiteAcesso(
+                    profissional, "INTERACAO", "OBSERVACAO"
+                );
         }
 
         if ("META".equals(tipoNormalizado)) {
-            return autor instanceof Profissional
-                && acompanhamento != null
+            return acompanhamento != null
+                && "ATIVO".equalsIgnoreCase(acompanhamento.getStatus())
+                && destinatario == null
+                && autor instanceof Profissional profissional
                 && autor.equals(acompanhamento.getProfissional())
                 && situacaoMeta != null
                 && !situacaoMeta.isBlank()
-                && situacaoMeta.trim().length() <= 50;
+                && situacaoMeta.trim().length() <= 50
+                && acompanhamento.permiteAcesso(
+                    profissional, "INTERACAO", "META"
+                );
         }
 
         return false;
@@ -152,24 +185,27 @@ public class Interacao {
                 );
             }
         } else if ("OBSERVACAO".equals(tipoNormalizado)
-            || "META".equals(tipoNormalizado)) {
-            if (!(autor instanceof Profissional)) {
-                throw new IllegalArgumentException(
-                    "Somente um profissional pode criar observações e metas."
-                );
-            }
+        || "META".equals(tipoNormalizado)) {
 
-            if (destinatario != null) {
-                throw new IllegalArgumentException(
-                    "Observações e metas não devem ter destinatário."
-                );
-            }
+        if (!"ATIVO".equalsIgnoreCase(acompanhamento.getStatus())) {
+            throw new IllegalStateException(
+                "O acompanhamento precisa estar ativo."
+            );
+        }
 
-            if (!autor.equals(acompanhamento.getProfissional())) {
-                throw new IllegalArgumentException(
-                    "O autor precisa ser o profissional deste acompanhamento."
-                );
-            }
+        if (destinatario != null) {
+            throw new IllegalArgumentException(
+                "Observações e metas não devem ter destinatário."
+            );
+        }
+
+        if (!autor.equals(acompanhamento.getProfissional())) {
+            throw new IllegalArgumentException(
+                "O autor precisa ser o profissional deste acompanhamento."
+            );
+        }
+
+        validarPermissaoProfissional(tipoNormalizado);
         } else {
             throw new IllegalArgumentException(
                 "O tipo da interação é inválido."
@@ -189,6 +225,13 @@ public class Interacao {
     }
 
     public void atualizar(String conteudo, LocalDateTime prazo) {
+
+        if (acompanhamento == null) {
+            throw new IllegalStateException(
+                "O acompanhamento é obrigatório."
+            );
+        }
+
         if (criadaEm == null) {
             throw new IllegalStateException(
                 "A interação precisa ser enviada antes de ser atualizada."
@@ -225,6 +268,8 @@ public class Interacao {
             );
         }
 
+        validarPermissaoProfissional("ALTERAR_" + tipoNormalizado);
+
         if (conteudo == null || conteudo.isBlank()) {
             throw new IllegalArgumentException(
                 "O conteúdo não pode ficar vazio."
@@ -250,6 +295,13 @@ public class Interacao {
     }
 
     public void atualizarSituacaoMeta(String situacao) {
+
+        if (acompanhamento == null) {
+            throw new IllegalStateException(
+                "O acompanhamento é obrigatório."
+            );
+        }
+
         if (!"META".equalsIgnoreCase(tipo)) {
             throw new IllegalStateException(
                 "Somente uma interação do tipo META possui situação de meta."
@@ -274,6 +326,8 @@ public class Interacao {
                 "Somente o profissional responsável pode atualizar a meta."
             );
         }
+
+        validarPermissaoProfissional("ALTERAR_META");
 
         if (situacao == null || situacao.isBlank()) {
             throw new IllegalArgumentException(
@@ -377,6 +431,7 @@ public class Interacao {
 
         this.conteudo = conteudo == null ? null : conteudo.trim();
     }
+    
 
     public LocalDateTime getPrazo() {
         return prazo;

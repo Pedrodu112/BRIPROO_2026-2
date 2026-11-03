@@ -81,13 +81,8 @@ public class InteracaoService {
 
         validarParticipante(acompanhamento, usuario);
 
-        return interacaoRepository.findAll()
-                .stream()
-                .filter(interacao ->
-                        acompanhamentoId.equals(
-                                interacao.getAcompanhamento().getId()
-                ))
-                .toList();
+        return interacaoRepository
+        .findByAcompanhamento_IdOrderByCriadaEmAsc(acompanhamentoId);
     }
 
     @Transactional
