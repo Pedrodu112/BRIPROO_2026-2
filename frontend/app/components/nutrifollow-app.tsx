@@ -173,6 +173,7 @@ export default function NutriFollowApp() {
   const [demoId, setDemoId] = useState("");
   const [demoRole, setDemoRole] = useState<Role>("COMUM");
   const [workspace, setWorkspace] = useState<DemoContext | null>(null);
+  const [todayKey, setTodayKey] = useState("");
   const [view, setView] = useState<View>("inicio");
   const [notice, setNotice] = useState<Notice | null>(null);
   const [busy, setBusy] = useState(false);
@@ -252,8 +253,7 @@ export default function NutriFollowApp() {
       )
     : [];
 
-  const todayKey = new Date().toDateString();
-  const todayRecords = records.filter((item) => new Date(item.registradoEm).toDateString() === todayKey);
+  const todayRecords = records.filter((item) => todayKey !== "" && new Date(item.registradoEm).toDateString() === todayKey);
   const latestWeightRecord = [...records]
     .filter((item) => item.tipo === "PESO" && item.pesoKg != null)
     .sort((a, b) => new Date(b.registradoEm).getTime() - new Date(a.registradoEm).getTime())[0];
@@ -442,6 +442,7 @@ export default function NutriFollowApp() {
           senha: registerPassword,
         }),
       });
+      setTodayKey(new Date().toDateString());
       setWorkspace({
         id: created.id,
         role: "COMUM",
@@ -471,6 +472,7 @@ export default function NutriFollowApp() {
       return;
     }
     setPlanKind(demoRole === "NUTRICIONISTA" ? "ALIMENTAR" : "TREINO");
+    setTodayKey(new Date().toDateString());
     setWorkspace({
       id,
       role: demoRole,
@@ -1034,6 +1036,7 @@ export default function NutriFollowApp() {
   }
 
   function logoutDemo() {
+    setTodayKey("");
     setPlanKind("TREINO");
     setWorkspace(null);
     setView("inicio");
@@ -1291,7 +1294,7 @@ export default function NutriFollowApp() {
               className="icon-button"
               title="Atualizar dados"
               aria-label="Atualizar dados"
-              onClick={() => setReloadKey((value) => value + 1)}
+              onClick={() => { setTodayKey(new Date().toDateString()); setReloadKey((value) => value + 1); }}
             >
               <Glyph name="refresh" />
             </button>
