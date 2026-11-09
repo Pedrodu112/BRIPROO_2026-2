@@ -4,6 +4,12 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+### Local configuration / secrets ###
+src/main/resources/application-local.properties
+src/main/resources/application-secret.properties
+.env
+.env.*
+
 ### STS ###
 .apt_generated
 .classpath
