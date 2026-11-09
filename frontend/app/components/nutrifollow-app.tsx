@@ -235,7 +235,7 @@ export default function NutriFollowApp() {
 
   function toggleFollowupPermission(item: Acompanhamento, permission: string, checked: boolean) {
     setPermissionDrafts((current) => {
-      const selected = current[String(item.id)] ?? defaultPermissionsForFinalidade(item.finalidade);
+      const selected = current[String(item.id)] ?? defaultPermissionsForFinalidade();
       const next = checked
         ? [...selected, permission]
         : selected.filter((value) => value !== permission);
@@ -296,6 +296,7 @@ export default function NutriFollowApp() {
 
   useEffect(() => {
     if (!workspace) return;
+    const currentWorkspace = workspace;
     let active = true;
 
     async function load() {
@@ -304,14 +305,14 @@ export default function NutriFollowApp() {
         if (view === "administracao") return;
 
         if (view === "inicio") {
-          if (workspace.role === "COMUM") {
+          if (currentWorkspace.role === "COMUM") {
             const results = await Promise.all([
               apiRequest<Registro[]>(
-                "/usuarios/" + workspace.id + "/registros",
+                "/usuarios/" + currentWorkspace.id + "/registros",
               ),
-              apiRequest<Plano[]>("/planos/usuario/" + workspace.id),
+              apiRequest<Plano[]>("/planos/usuario/" + currentWorkspace.id),
               apiRequest<Acompanhamento[]>(
-                "/acompanhamentos/usuario/" + workspace.id,
+                "/acompanhamentos/usuario/" + currentWorkspace.id,
               ),
               apiRequest<Publicacao[]>("/publicacoes"),
             ]);
@@ -321,12 +322,12 @@ export default function NutriFollowApp() {
             setFollowups(results[2]);
             setPublications(results[3]);
           } else if (
-            workspace.role === "NUTRICIONISTA" ||
-            workspace.role === "EDUCACAO_FISICA"
+            currentWorkspace.role === "NUTRICIONISTA" ||
+            currentWorkspace.role === "EDUCACAO_FISICA"
           ) {
             const results = await Promise.all([
               apiRequest<Acompanhamento[]>(
-                "/acompanhamentos/profissional/" + workspace.id,
+                "/acompanhamentos/profissional/" + currentWorkspace.id,
               ),
               apiRequest<Publicacao[]>("/publicacoes"),
             ]);
@@ -334,25 +335,25 @@ export default function NutriFollowApp() {
             setFollowups(results[0]);
             setPublications(results[1]);
           }
-        } else if (view === "registros" && workspace.role === "COMUM") {
+        } else if (view === "registros" && currentWorkspace.role === "COMUM") {
           const data = await apiRequest<Registro[]>(
-            "/usuarios/" + workspace.id + "/registros",
+            "/usuarios/" + currentWorkspace.id + "/registros",
           );
           if (active) setRecords(data);
         } else if (view === "planos") {
-          if (workspace.role === "COMUM") {
+          if (currentWorkspace.role === "COMUM") {
             const data = await apiRequest<Plano[]>(
-              "/planos/usuario/" + workspace.id,
+              "/planos/usuario/" + currentWorkspace.id,
             );
             if (active) setPlans(data);
-          } else if (workspace.role === "ADMINISTRADOR") {
+          } else if (currentWorkspace.role === "ADMINISTRADOR") {
             return;
           }
         } else if (view === "acompanhamentos") {
           const path =
-            workspace.role === "COMUM"
-              ? "/acompanhamentos/usuario/" + workspace.id
-              : "/acompanhamentos/profissional/" + workspace.id;
+            currentWorkspace.role === "COMUM"
+              ? "/acompanhamentos/usuario/" + currentWorkspace.id
+              : "/acompanhamentos/profissional/" + currentWorkspace.id;
           const data = await apiRequest<Acompanhamento[]>(path);
           if (!active) return;
           setFollowups(data);
@@ -364,12 +365,12 @@ export default function NutriFollowApp() {
           if (active) setPublications(data);
         } else if (view === "mensagens") {
           const data =
-            workspace.role === "COMUM"
+            currentWorkspace.role === "COMUM"
               ? await apiRequest<Acompanhamento[]>(
-                  "/acompanhamentos/usuario/" + workspace.id,
+                  "/acompanhamentos/usuario/" + currentWorkspace.id,
                 )
               : await apiRequest<Acompanhamento[]>(
-                  "/acompanhamentos/profissional/" + workspace.id,
+                  "/acompanhamentos/profissional/" + currentWorkspace.id,
                 );
           if (!active) return;
           setFollowups(data);
@@ -399,7 +400,7 @@ export default function NutriFollowApp() {
       "/interacoes/acompanhamento/" +
         selectedFollowId +
         "?usuarioId=" +
-        workspace.id,
+        currentWorkspace.id,
     )
       .then((data) => {
         if (active) setInteractions(data);
@@ -824,11 +825,7 @@ export default function NutriFollowApp() {
         }),
       action === "aceitar"
         ? "Acompanhamento aceito."
-        : action === "recusar"
-          ? "Solicitação recusada."
-          : action === "autorizar"
-            ? "Permissões concedidas."
-            : "Acompanhamento encerrado.",
+        : "Permissões concedidas.",
     );
   }
 
