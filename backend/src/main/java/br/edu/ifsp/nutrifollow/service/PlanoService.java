@@ -1,6 +1,10 @@
 
 package br.edu.ifsp.nutrifollow.service;
 
+
+import br.edu.ifsp.nutrifollow.exception.RecursoNaoEncontradoException;
+import br.edu.ifsp.nutrifollow.exception.OperacaoNaoPermitidaException;
+
 import java.time.LocalDateTime;
 import br.edu.ifsp.nutrifollow.entity.*;
 import br.edu.ifsp.nutrifollow.repository.*;
@@ -73,7 +77,7 @@ public class PlanoService {
         Usuario usuario = buscarUsuarioAtivo(usuarioId);
 
         if (!(usuario instanceof UsuarioComum usuarioComum)) {
-            throw new IllegalArgumentException(
+            throw new OperacaoNaoPermitidaException(
                 "Somente usuários comuns podem criar planos próprios de treino."
             );
         }
@@ -124,16 +128,20 @@ public class PlanoService {
         Usuario usuario = buscarUsuarioAtivo(usuarioId);
 
         if (!(usuario instanceof UsuarioComum usuarioComum)) {
-            throw new IllegalArgumentException(
+            throw new OperacaoNaoPermitidaException(
                 "Somente usuários comuns podem alterar seus próprios planos."
             );
         }
 
         Plano plano = buscarPlano(planoId);
 
+        if (!Boolean.TRUE.equals(plano.getAtivo())) {
+            throw new IllegalStateException("O plano está inativo.");
+        }
+
         if (!plano.podeSerAlteradoPor(usuarioComum, null)) {
-            throw new IllegalStateException(
-                "O usuário não pode alterar este plano."
+            throw new OperacaoNaoPermitidaException(
+                "O usuário não tem autorização para alterar este plano."
             );
         }
 
@@ -207,6 +215,16 @@ public class PlanoService {
 
         Plano plano = buscarPlano(planoId);
 
+        if (!Boolean.TRUE.equals(plano.getAtivo())) {
+            throw new IllegalStateException("O plano está inativo.");
+        }
+
+        if (!plano.podeSerAlteradoPor(profissional, acompanhamento)) {
+            throw new OperacaoNaoPermitidaException(
+                "O profissional não tem autorização para alterar este plano."
+            );
+        }
+
         if (profissional instanceof Nutricionista nutricionista) {
             nutricionista.alterarPlanoAlimentar(
                     acompanhamento, plano, alteracoes);
@@ -216,7 +234,7 @@ public class PlanoService {
                     acompanhamento, plano, alteracoes);
 
         } else {
-            throw new IllegalArgumentException(
+            throw new OperacaoNaoPermitidaException(
                     "Tipo de profissional não reconhecido.");
         }
 
@@ -241,7 +259,7 @@ public class PlanoService {
         }
 
         return planoRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
                         "Plano não encontrado."));
     }
 
@@ -252,7 +270,7 @@ public class PlanoService {
         }
 
         return acompanhamentoRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
                         "Acompanhamento não encontrado."));
     }
 
@@ -263,7 +281,7 @@ public class PlanoService {
         }
 
         Usuario usuario = usuarioRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
                         "Usuário não encontrado."));
 
         if (!Boolean.TRUE.equals(usuario.getAtivo())) {
@@ -277,7 +295,7 @@ public class PlanoService {
         Usuario usuario = buscarUsuarioAtivo(id);
 
         if (!(usuario instanceof Profissional profissional)) {
-            throw new IllegalArgumentException(
+            throw new OperacaoNaoPermitidaException(
                     "O usuário informado não é um profissional.");
         }
 
@@ -290,7 +308,7 @@ public class PlanoService {
         Profissional profissional = buscarProfissional(id);
 
         if (!(profissional instanceof ProfissionalEducacaoFisica educador)) {
-            throw new IllegalArgumentException(
+            throw new OperacaoNaoPermitidaException(
                     "O profissional não é da área de educação física.");
         }
 
@@ -301,7 +319,7 @@ public class PlanoService {
         Profissional profissional = buscarProfissional(id);
 
         if (!(profissional instanceof Nutricionista nutricionista)) {
-            throw new IllegalArgumentException(
+            throw new OperacaoNaoPermitidaException(
                     "O profissional não é nutricionista.");
         }
 

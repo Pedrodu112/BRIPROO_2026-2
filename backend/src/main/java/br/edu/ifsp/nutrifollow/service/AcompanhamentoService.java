@@ -1,15 +1,15 @@
 
 package br.edu.ifsp.nutrifollow.service;
 
+import br.edu.ifsp.nutrifollow.exception.RecursoNaoEncontradoException;
+import br.edu.ifsp.nutrifollow.exception.OperacaoNaoPermitidaException;
+
 import br.edu.ifsp.nutrifollow.entity.Acompanhamento;
 import br.edu.ifsp.nutrifollow.entity.Profissional;
 import br.edu.ifsp.nutrifollow.entity.Usuario;
 import br.edu.ifsp.nutrifollow.entity.UsuarioComum;
 import br.edu.ifsp.nutrifollow.repository.AcompanhamentoRepository;
 import br.edu.ifsp.nutrifollow.repository.UsuarioRepository;
-
-import br.edu.ifsp.nutrifollow.exception.RecursoNaoEncontradoException;
-import br.edu.ifsp.nutrifollow.exception.OperacaoNaoPermitidaException;
 
 import java.util.List;
 

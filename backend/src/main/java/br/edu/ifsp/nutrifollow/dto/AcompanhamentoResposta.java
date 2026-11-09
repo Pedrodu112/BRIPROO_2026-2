@@ -2,6 +2,7 @@
 package br.edu.ifsp.nutrifollow.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record AcompanhamentoResposta(
         Integer id,
@@ -9,6 +10,7 @@ public record AcompanhamentoResposta(
         Long profissionalId,
         String finalidade,
         String status,
+        List<String> permissoesConcedidas,
         LocalDateTime solicitadoEm,
         LocalDateTime respondidoEm,
         String motivoRecusa,

@@ -131,8 +131,6 @@ public class Registro {
         this.cargaKg = novosDados.cargaKg;
         this.quantidadeMl = novosDados.quantidadeMl;
         this.pesoKg = novosDados.pesoKg;
-        this.planoOrigem = novosDados.planoOrigem;
-        this.versaoPlanoOrigem = novosDados.versaoPlanoOrigem;
         this.observacoes = novosDados.observacoes == null
             ? null
             : novosDados.observacoes.trim();

@@ -1,5 +1,6 @@
 package br.edu.ifsp.nutrifollow.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -26,7 +27,7 @@ public record PlanoResposta(
             String grupoMuscular,
             Integer seriesPrevistas,
             Integer repeticoesPrevistas,
-            String cargaPrevistaKg,
+            BigDecimal cargaPrevistaKg,
             Integer descansoSegundos,
             String horarioSugerido,
             Boolean ativo

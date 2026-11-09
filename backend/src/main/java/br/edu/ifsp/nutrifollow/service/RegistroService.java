@@ -1,6 +1,10 @@
 
 package br.edu.ifsp.nutrifollow.service;
 
+
+import br.edu.ifsp.nutrifollow.exception.RecursoNaoEncontradoException;
+import br.edu.ifsp.nutrifollow.exception.OperacaoNaoPermitidaException;
+
 import br.edu.ifsp.nutrifollow.entity.Registro;
 import br.edu.ifsp.nutrifollow.entity.Usuario;
 import br.edu.ifsp.nutrifollow.entity.UsuarioComum;
@@ -111,12 +115,12 @@ public class RegistroService {
         }
 
         Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
                         "Usuário não encontrado."
                 ));
 
         if (!(usuario instanceof UsuarioComum usuarioComum)) {
-            throw new IllegalArgumentException(
+            throw new OperacaoNaoPermitidaException(
                     "A operação é permitida somente para usuários comuns."
             );
         }
@@ -141,13 +145,13 @@ public class RegistroService {
         }
 
         Registro registro = registroRepository.findById(registroId)
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
                         "Registro não encontrado."
                 ));
 
         if (registro.getUsuario() == null
                 || !usuarioId.equals(registro.getUsuario().getId())) {
-            throw new IllegalArgumentException(
+            throw new RecursoNaoEncontradoException(
                     "Registro não encontrado para este usuário."
             );
         }

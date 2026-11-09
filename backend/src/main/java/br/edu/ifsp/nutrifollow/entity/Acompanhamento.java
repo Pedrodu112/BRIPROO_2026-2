@@ -327,6 +327,10 @@ public class Acompanhamento {
         }
     }
 
+    public List<String> getPermissoesConcedidas() {
+        return List.copyOf(permissoesConcedidas);
+    }
+
     public UsuarioComum getUsuario() {
         return usuario;
     }

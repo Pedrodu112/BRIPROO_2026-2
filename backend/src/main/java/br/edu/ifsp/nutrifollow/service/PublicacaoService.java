@@ -1,6 +1,8 @@
 
 package br.edu.ifsp.nutrifollow.service;
 
+import br.edu.ifsp.nutrifollow.exception.RecursoNaoEncontradoException;
+import br.edu.ifsp.nutrifollow.exception.OperacaoNaoPermitidaException;
 
 import br.edu.ifsp.nutrifollow.entity.Profissional;
 import br.edu.ifsp.nutrifollow.entity.Publicacao;
@@ -63,10 +65,12 @@ public class PublicacaoService {
         Publicacao publicacao = buscarPublicacao(publicacaoId);
 
         if (publicacao.getAutor() == null
-                || !profissional.getId().equals(
-                        publicacao.getAutor().getId())) {
-            throw new IllegalArgumentException(
-                    "Você não pode editar uma publicação de outro profissional."
+            || profissional.getId() == null
+            || !profissional.getId().equals(
+                publicacao.getAutor().getId())) {
+
+            throw new OperacaoNaoPermitidaException(
+                "Você não pode editar uma publicação de outro profissional."
             );
         }
 
@@ -87,14 +91,14 @@ public class PublicacaoService {
                 );
         }
 
-        Usuario responsavel = usuarioRepository.findById(responsavelId)
-                .orElseThrow(() -> new IllegalArgumentException(
+        Usuario usuario = usuarioRepository.findById(responsavelId)
+            .orElseThrow(() -> new RecursoNaoEncontradoException(
                 "Responsável pela inativação não encontrado."
-                ));
+            ));
 
         Publicacao publicacao = buscarPublicacao(publicacaoId);
 
-        publicacao.inativar(responsavel, motivo);
+        publicacao.inativar(usuario, motivo);
 
         publicacaoRepository.save(publicacao);
         }
@@ -109,13 +113,13 @@ public class PublicacaoService {
         }
 
         Usuario usuario = usuarioRepository.findById(profissionalId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Profissional não encontrado."
-                ));
+            .orElseThrow(() -> new RecursoNaoEncontradoException(
+                "Profissional não encontrado."
+            ));
 
         if (!(usuario instanceof Profissional profissional)) {
-            throw new IllegalArgumentException(
-                    "O usuário informado não é um profissional."
+            throw new OperacaoNaoPermitidaException(
+                "Somente profissionais podem realizar esta operação."
             );
         }
 
@@ -142,8 +146,8 @@ public class PublicacaoService {
         }
 
         return publicacaoRepository.findById(publicacaoId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Publicação não encontrada."
-                ));
+            .orElseThrow(() -> new RecursoNaoEncontradoException(
+                "Publicação não encontrada."
+            ));
     }
 }

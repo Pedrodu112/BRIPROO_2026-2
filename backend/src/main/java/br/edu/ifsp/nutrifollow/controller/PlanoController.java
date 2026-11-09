@@ -158,9 +158,7 @@ public class PlanoController {
                                 item.getGrupoMuscular(),
                                 item.getSeriesPrevistas(),
                                 item.getRepeticoesPrevistas(),
-                                item.getCargaPrevistaKg() == null
-                                        ? null
-                                        : item.getCargaPrevistaKg().toString(),
+                                item.getCargaPrevistaKg(),
                                 item.getDescansoSegundos(),
                                 item.getHorarioSugerido(),
                                 item.getAtivo()

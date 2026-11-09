@@ -96,20 +96,22 @@ public class AcompanhamentoController {
             Acompanhamento acompanhamento) {
 
         return new AcompanhamentoResposta(
-                acompanhamento.getId(),
-                acompanhamento.getUsuario().getId(),
-                acompanhamento.getProfissional().getId(),
-                acompanhamento.getFinalidade(),
-                acompanhamento.getStatus(),
-                acompanhamento.getSolicitadoEm(),
-                acompanhamento.getRespondidoEm(),
-                acompanhamento.getMotivoRecusa(),
-                acompanhamento.getAutorizadoEm(),
-                acompanhamento.getIniciadoEm(),
-                acompanhamento.getEncerradoEm(),
-                acompanhamento.getEncerradoPor() == null
-                        ? null : acompanhamento.getEncerradoPor().getId(),
-                acompanhamento.getMotivoEncerramento()
+            acompanhamento.getId(),
+            acompanhamento.getUsuario().getId(),
+            acompanhamento.getProfissional().getId(),
+            acompanhamento.getFinalidade(),
+            acompanhamento.getStatus(),
+            acompanhamento.getPermissoesConcedidas(),
+            acompanhamento.getSolicitadoEm(),
+            acompanhamento.getRespondidoEm(),
+            acompanhamento.getMotivoRecusa(),
+            acompanhamento.getAutorizadoEm(),
+            acompanhamento.getIniciadoEm(),
+            acompanhamento.getEncerradoEm(),
+            acompanhamento.getEncerradoPor() == null
+                ? null
+                : acompanhamento.getEncerradoPor().getId(),
+            acompanhamento.getMotivoEncerramento()
         );
     }
 

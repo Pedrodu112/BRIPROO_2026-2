@@ -4,6 +4,7 @@ package br.edu.ifsp.nutrifollow.service;
 
 import br.edu.ifsp.nutrifollow.exception.RecursoNaoEncontradoException;
 import br.edu.ifsp.nutrifollow.exception.OperacaoNaoPermitidaException;
+
 import br.edu.ifsp.nutrifollow.entity.Acompanhamento;
 import br.edu.ifsp.nutrifollow.entity.Interacao;
 import br.edu.ifsp.nutrifollow.entity.Usuario;

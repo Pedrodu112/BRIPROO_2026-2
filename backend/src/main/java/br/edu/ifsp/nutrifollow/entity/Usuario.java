@@ -192,6 +192,12 @@ public abstract class Usuario {
     }
 
     public void atualizarDados(String nome, String email) {
+        if (!Boolean.TRUE.equals(this.ativo)) {
+            throw new IllegalStateException(
+                "Não é possível atualizar uma conta inativa."
+            );
+        }
+        
         if (nome == null || nome.isBlank()) {
             throw new IllegalArgumentException(
                 "O nome é obrigatório."
@@ -250,9 +256,17 @@ public abstract class Usuario {
             );
         }
 
+        String motivoNormalizado = motivo.trim();
+
+        if (motivoNormalizado.length() > 500) {
+            throw new IllegalArgumentException(
+                "O motivo da inativação não pode ultrapassar 500 caracteres."
+            );
+        }
+
         this.ativo = false;
         this.autorInativacao = autor;
         this.dataInativacao = LocalDateTime.now();
-        this.motivoInativacao = motivo.trim();
+        this.motivoInativacao = motivoNormalizado;
     }
 }

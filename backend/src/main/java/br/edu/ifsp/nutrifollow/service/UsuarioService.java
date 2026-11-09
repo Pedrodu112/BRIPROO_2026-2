@@ -25,16 +25,17 @@ public class UsuarioService {
             );
         }
 
-        String nome = dados.nome().trim();
-        String email = dados.email().trim().toLowerCase(Locale.ROOT);
-
-
-        if (dados.nome() == null || dados.email() == null || dados.senha() == null) {
+        if (dados.nome() == null
+            || dados.email() == null
+            || dados.senha() == null) {
             throw new IllegalArgumentException(
                 "Nome, e-mail e senha são obrigatórios."
             );
         }
-        
+
+        String nome = dados.nome().trim();
+        String email = dados.email().trim().toLowerCase(Locale.ROOT);
+
         if (nome.isBlank()) {
             throw new IllegalArgumentException(
                 "O nome é obrigatório."
@@ -48,7 +49,7 @@ public class UsuarioService {
         }
 
         if (usuarioRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException(
+            throw new IllegalStateException(
                 "Este e-mail já está cadastrado."
             );
         }
