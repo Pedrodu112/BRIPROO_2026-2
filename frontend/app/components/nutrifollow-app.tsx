@@ -413,11 +413,6 @@ export default function NutriFollowApp() {
     };
   }, [workspace, view, selectedFollowId, reloadKey]);
 
-  useEffect(() => {
-    if (workspace?.role === "NUTRICIONISTA") setPlanKind("ALIMENTAR");
-    else setPlanKind("TREINO");
-  }, [workspace?.role]);
-
   async function runAction(action: () => Promise<unknown>, success: string): Promise<boolean> {
     setBusy(true);
     setNotice(null);
@@ -475,6 +470,7 @@ export default function NutriFollowApp() {
       setNotice({ kind: "error", text: "Informe um ID numérico válido." });
       return;
     }
+    setPlanKind(demoRole === "NUTRICIONISTA" ? "ALIMENTAR" : "TREINO");
     setWorkspace({
       id,
       role: demoRole,
@@ -686,7 +682,7 @@ export default function NutriFollowApp() {
 
     const editing = editingPlanId !== null;
     let path = "";
-    let method: "POST" | "PUT" = editing ? "PUT" : "POST";
+    const method: "POST" | "PUT" = editing ? "PUT" : "POST";
 
     if (workspace.role === "COMUM") {
       if (editing) {
@@ -1042,6 +1038,7 @@ export default function NutriFollowApp() {
   }
 
   function logoutDemo() {
+    setPlanKind("TREINO");
     setWorkspace(null);
     setView("inicio");
     setNotice(null);
