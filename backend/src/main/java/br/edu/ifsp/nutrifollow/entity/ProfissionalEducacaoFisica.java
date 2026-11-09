@@ -133,10 +133,15 @@ public class ProfissionalEducacaoFisica extends Profissional {
             ItemPlano itemAtual = itensAtivos.get(i);
             ItemPlano novosDados = alteracoes.get(i);
 
-            plano.alterarItem(itemAtual, novosDados);
+            plano.alterarItem(
+                itemAtual,
+                novosDados,
+                this,
+                acompanhamento
+            );
         }
     }
-
+            
     public String getEspecialidade() {
         return especialidade;
     }

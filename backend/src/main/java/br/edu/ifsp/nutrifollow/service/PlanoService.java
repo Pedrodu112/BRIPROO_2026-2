@@ -1,6 +1,7 @@
 
 package br.edu.ifsp.nutrifollow.service;
 
+import java.time.LocalDateTime;
 import br.edu.ifsp.nutrifollow.entity.*;
 import br.edu.ifsp.nutrifollow.repository.*;
 
@@ -59,6 +60,126 @@ public class PlanoService {
 
         Plano plano = profissional.criarPlanoAlimentar(
                 acompanhamento, orientacoes);
+
+        return planoRepository.save(plano);
+    }
+
+    @Transactional
+    public Plano criarTreinoProprio(
+            Long usuarioId,
+            String titulo,
+            List<ItemPlano> itens) {
+
+        Usuario usuario = buscarUsuarioAtivo(usuarioId);
+
+        if (!(usuario instanceof UsuarioComum usuarioComum)) {
+            throw new IllegalArgumentException(
+                "Somente usuários comuns podem criar planos próprios de treino."
+            );
+        }
+
+        if (titulo == null
+            || titulo.isBlank()
+            || titulo.trim().length() > 255) {
+            throw new IllegalArgumentException(
+                "O título é obrigatório e não pode ultrapassar 255 caracteres."
+            );
+        }
+
+        if (itens == null || itens.isEmpty()) {
+            throw new IllegalArgumentException(
+                "O plano precisa possuir ao menos um item."
+            );
+        }
+
+        Plano plano = new Plano();
+
+        plano.setUsuario(usuarioComum);
+        plano.setTipo("TREINO");
+        plano.setTitulo(titulo.trim());
+        plano.setObjetivo(usuarioComum.getObjetivo());
+        plano.setCriadoPor(usuarioComum);
+        plano.setCriadoEm(LocalDateTime.now());
+
+        for (ItemPlano item : itens) {
+            if (item == null) {
+                throw new IllegalArgumentException(
+                    "A lista não pode conter itens nulos."
+                );
+            }
+
+            plano.incluirItem(item);
+        }
+
+        return planoRepository.save(plano);
+    }
+
+
+    @Transactional
+    public Plano alterarProprio(
+            Long usuarioId,
+            Integer planoId,
+            List<ItemPlano> alteracoes) {
+
+        Usuario usuario = buscarUsuarioAtivo(usuarioId);
+
+        if (!(usuario instanceof UsuarioComum usuarioComum)) {
+            throw new IllegalArgumentException(
+                "Somente usuários comuns podem alterar seus próprios planos."
+            );
+        }
+
+        Plano plano = buscarPlano(planoId);
+
+        if (!plano.podeSerAlteradoPor(usuarioComum, null)) {
+            throw new IllegalStateException(
+                "O usuário não pode alterar este plano."
+            );
+        }
+
+        if (alteracoes == null || alteracoes.isEmpty()) {
+            throw new IllegalArgumentException(
+                "Informe os itens atualizados do plano."
+            );
+        }
+
+        List<ItemPlano> itensAtivos = plano.getItens().stream()
+            .filter(item -> Boolean.TRUE.equals(item.getAtivo()))
+            .toList();
+
+        if (itensAtivos.size() != alteracoes.size()) {
+            throw new IllegalArgumentException(
+                "A quantidade de alterações deve corresponder aos itens ativos do plano."
+            );
+        }
+
+        for (ItemPlano novosDados : alteracoes) {
+            if (novosDados == null) {
+                throw new IllegalArgumentException(
+                    "A lista não pode conter itens nulos."
+                );
+            }
+
+            novosDados.setPlano(plano);
+
+            if (!novosDados.validarConfiguracao()) {
+                throw new IllegalArgumentException(
+                    "Um dos itens de treino está inválido."
+                );
+            }
+        }
+
+        for (int i = 0; i < alteracoes.size(); i++) {
+            ItemPlano itemAtual = itensAtivos.get(i);
+            ItemPlano novosDados = alteracoes.get(i);
+
+            plano.alterarItem(
+                itemAtual,
+                novosDados,
+                usuarioComum,
+                null
+            );
+        }
 
         return planoRepository.save(plano);
     }

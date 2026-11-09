@@ -30,6 +30,7 @@ public abstract class Profissional extends Usuario {
     @Column(name = "comprovante")
     private List<String> comprovantes = new ArrayList<>();
 
+    @Column(nullable = false, length = 20)
     private String statusVerificacao = "PENDENTE";
 
     @ManyToOne
@@ -91,52 +92,47 @@ public abstract class Profissional extends Usuario {
         String decisao,
         String motivo) {
 
-        if (administrador == null
-            || !Boolean.TRUE.equals(administrador.getAtivo())) {
-            throw new IllegalArgumentException(
-                "O administrador precisa estar ativo."
-            );
-        }
-
-        if (!"PENDENTE".equals(this.statusVerificacao)) {
-            throw new IllegalStateException(
-                "Não existe uma verificação pendente para decidir."
-            );
-        }
-
-        if (decisao == null || decisao.isBlank()) {
-            throw new IllegalArgumentException(
-                "A decisão é obrigatória."
-            );
-        }
-
-        String decisaoNormalizada =
+                String decisaoNormalizada =
             decisao.trim().toUpperCase(Locale.ROOT);
 
-        if (!"APROVADO".equals(decisaoNormalizada)
-            && !"REPROVADO".equals(decisaoNormalizada)) {
+        if (!"APROVADA".equals(decisaoNormalizada)
+            && !"REJEITADA".equals(decisaoNormalizada)) {
+
             throw new IllegalArgumentException(
-                "A decisão deve ser APROVADO ou REPROVADO."
+                "A decisão deve ser APROVADA ou REJEITADA."
             );
         }
 
-        if ("REPROVADO".equals(decisaoNormalizada)
+        if ("REJEITADA".equals(decisaoNormalizada)
             && (motivo == null || motivo.isBlank())) {
+
             throw new IllegalArgumentException(
-                "Informe o motivo da reprovação."
+                "Informe o motivo da rejeição."
+            );
+        }
+
+        String motivoNormalizado =
+            motivo == null || motivo.isBlank()
+                ? null
+                : motivo.trim();
+
+        if (motivoNormalizado != null
+            && motivoNormalizado.length() > 500) {
+
+            throw new IllegalArgumentException(
+                "O motivo da decisão não pode ultrapassar 500 caracteres."
             );
         }
 
         this.statusVerificacao = decisaoNormalizada;
         this.verificadoPor = administrador;
         this.verificadoEm = LocalDateTime.now();
-        this.motivoDecisao =
-            motivo == null || motivo.isBlank() ? null : motivo.trim();
+        this.motivoDecisao = motivoNormalizado;
     }
 
     public boolean estaVerificado() {
         return Boolean.TRUE.equals(getAtivo())
-            && "APROVADO".equals(this.statusVerificacao);
+            && "APROVADA".equals(this.statusVerificacao);
     }
 
     public Publicacao publicarConteudo(String titulo, String texto) {

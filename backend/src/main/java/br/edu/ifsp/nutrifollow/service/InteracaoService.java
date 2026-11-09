@@ -1,6 +1,9 @@
 
 package br.edu.ifsp.nutrifollow.service;
 
+
+import br.edu.ifsp.nutrifollow.exception.RecursoNaoEncontradoException;
+import br.edu.ifsp.nutrifollow.exception.OperacaoNaoPermitidaException;
 import br.edu.ifsp.nutrifollow.entity.Acompanhamento;
 import br.edu.ifsp.nutrifollow.entity.Interacao;
 import br.edu.ifsp.nutrifollow.entity.Usuario;
@@ -95,9 +98,9 @@ public class InteracaoService {
         Interacao interacao = buscarInteracao(interacaoId);
         Usuario usuario = buscarUsuarioAtivo(usuarioId);
 
-        if (!interacao.getAutor().equals(usuario)) {
-            throw new IllegalArgumentException(
-                    "Somente o autor pode atualizar a interação."
+        if (!mesmaIdentidade(interacao.getAutor(), usuario)) {
+            throw new OperacaoNaoPermitidaException(
+                "Somente o autor pode atualizar a interação."
             );
         }
 
@@ -116,8 +119,8 @@ public class InteracaoService {
         Usuario usuario = buscarUsuarioAtivo(usuarioId);
 
         if (!interacao.getAutor().equals(usuario)) {
-            throw new IllegalArgumentException(
-                    "Somente o autor pode atualizar a situação da meta."
+            throw new OperacaoNaoPermitidaException(
+                "Somente o autor pode atualizar a situação da meta."
             );
         }
 
@@ -134,6 +137,12 @@ public class InteracaoService {
         Interacao interacao = buscarInteracao(interacaoId);
         Usuario destinatario = buscarUsuarioAtivo(destinatarioId);
 
+        if (!mesmaIdentidade(interacao.getDestinatario(), destinatario)) {
+            throw new OperacaoNaoPermitidaException(
+                "Somente o destinatário pode marcar a mensagem como lida."
+            );
+        }
+
         interacao.marcarComoLida(destinatario);
 
         return interacaoRepository.save(interacao);
@@ -147,7 +156,7 @@ public class InteracaoService {
         }
 
         return acompanhamentoRepository.findById(acompanhamentoId)
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
                         "Acompanhamento não encontrado."
                 ));
         }
@@ -160,7 +169,7 @@ public class InteracaoService {
         }
 
         Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
                         "Usuário não encontrado."
                 ));
 
@@ -181,23 +190,31 @@ public class InteracaoService {
         }
 
         return interacaoRepository.findById(interacaoId)
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
                         "Interação não encontrada."
                 ));
     }
 
-    private void validarParticipante(
-            Acompanhamento acompanhamento,
-            Usuario usuario) {
+        private void validarParticipante(
+                Acompanhamento acompanhamento,
+                Usuario usuario) {
 
-        boolean participa =
-                usuario.equals(acompanhamento.getUsuario())
-                || usuario.equals(acompanhamento.getProfissional());
+            boolean participa =
+                mesmaIdentidade(usuario, acompanhamento.getUsuario())
+                || mesmaIdentidade(usuario, acompanhamento.getProfissional());
 
-        if (!participa) {
-            throw new IllegalArgumentException(
+            if (!participa) {
+                throw new OperacaoNaoPermitidaException(
                     "O usuário não participa deste acompanhamento."
-            );
+                );
+            }
         }
-    }
+
+        private boolean mesmaIdentidade(Usuario primeiro, Usuario segundo) {
+            return primeiro != null
+                && segundo != null
+                && (primeiro == segundo
+                    || (primeiro.getId() != null
+                        && primeiro.getId().equals(segundo.getId())));
+        }
 }

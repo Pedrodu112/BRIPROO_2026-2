@@ -11,4 +11,11 @@ public interface AcompanhamentoRepository
     List<Acompanhamento> findByUsuario_Id(Long usuarioId);
 
     List<Acompanhamento> findByProfissional_Id(Long profissionalId);
+
+    boolean existsByUsuario_IdAndProfissional_IdAndFinalidadeIgnoreCaseAndStatus(
+    Long usuarioId,
+    Long profissionalId,
+    String finalidade,
+    String status
+    );
 }

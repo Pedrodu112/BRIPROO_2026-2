@@ -1,7 +1,7 @@
 
 package br.edu.ifsp.nutrifollow.service;
 
-import br.edu.ifsp.nutrifollow.entity.Administrador;
+
 import br.edu.ifsp.nutrifollow.entity.Profissional;
 import br.edu.ifsp.nutrifollow.entity.Publicacao;
 import br.edu.ifsp.nutrifollow.entity.Usuario;
@@ -12,7 +12,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+    
 @Service
 public class PublicacaoService {
 
@@ -36,9 +36,7 @@ public class PublicacaoService {
                 profissionalId
         );
 
-        Publicacao publicacao = new Publicacao(
-                profissional, titulo, conteudo
-        );
+        Publicacao publicacao = profissional.publicarConteudo(titulo, conteudo);
 
         return publicacaoRepository.save(publicacao);
     }
@@ -75,43 +73,31 @@ public class PublicacaoService {
         publicacao.editar(titulo, conteudo);
 
         return publicacaoRepository.save(publicacao);
-    }
+          }
 
-    @Transactional
-    public void inativar(
-            Long administradorId,
-            Long publicacaoId,
-            String motivo) {
+        @Transactional
+        public void inativar(
+                Long responsavelId,
+                Long publicacaoId,
+                String motivo) {
 
-        if (administradorId == null) {
-            throw new IllegalArgumentException(
-                    "O identificador do administrador é obrigatório."
-            );
+        if (responsavelId == null) {
+                throw new IllegalArgumentException(
+                "O identificador do responsável é obrigatório."
+                );
         }
 
-        Usuario usuario = usuarioRepository.findById(administradorId)
+        Usuario responsavel = usuarioRepository.findById(responsavelId)
                 .orElseThrow(() -> new IllegalArgumentException(
-                        "Administrador não encontrado."
+                "Responsável pela inativação não encontrado."
                 ));
-
-        if (!(usuario instanceof Administrador administrador)) {
-            throw new IllegalArgumentException(
-                    "Somente um administrador pode inativar publicações."
-            );
-        }
-
-        if (!Boolean.TRUE.equals(administrador.getAtivo())) {
-            throw new IllegalStateException(
-                    "O administrador está inativo."
-            );
-        }
 
         Publicacao publicacao = buscarPublicacao(publicacaoId);
 
-        administrador.moderarPublicacao(publicacao, motivo);
-        publicacaoRepository.save(publicacao);
+        publicacao.inativar(responsavel, motivo);
 
-    }
+        publicacaoRepository.save(publicacao);
+        }
 
     private Profissional buscarProfissionalVerificado(
             Long profissionalId) {

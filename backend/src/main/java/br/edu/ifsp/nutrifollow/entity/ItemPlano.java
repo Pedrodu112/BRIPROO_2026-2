@@ -44,7 +44,14 @@ public class ItemPlano {
     }
 
     public boolean validarConfiguracao() {
-        if (plano == null || titulo == null || titulo.isBlank()) {
+        if (plano == null
+            || titulo == null
+            || titulo.isBlank()
+            || titulo.trim().length() > 255) {
+            return false;
+        }
+
+        if (descricao != null && descricao.trim().length() > 2000) {
             return false;
         }
 
@@ -78,9 +85,11 @@ public class ItemPlano {
             );
         }
 
-        if (novosDados.titulo == null || novosDados.titulo.isBlank()) {
+        if (novosDados.titulo == null
+            || novosDados.titulo.isBlank()
+            || novosDados.titulo.trim().length() > 255) {
             throw new IllegalArgumentException(
-                "O título do item é obrigatório."
+                "O título do item é obrigatório e não pode ultrapassar 255 caracteres."
             );
         }
 

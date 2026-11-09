@@ -1,6 +1,7 @@
 
 package br.edu.ifsp.nutrifollow.controller;
 
+import jakarta.validation.constraints.Size;
 import br.edu.ifsp.nutrifollow.dto.PlanoResposta;
 import br.edu.ifsp.nutrifollow.dto.ItemPlanoDados;
 import br.edu.ifsp.nutrifollow.entity.ItemPlano;
@@ -46,6 +47,21 @@ public class PlanoController {
         );
     }
 
+    @PostMapping("/treino/usuario")
+    public PlanoResposta criarTreinoProprio(
+            @RequestParam @NotNull Long usuarioId,
+            @RequestParam @NotBlank @Size(max = 255) String titulo,
+            @Valid @RequestBody ItensDados dados) {
+
+        return converterParaResposta(
+            planoService.criarTreinoProprio(
+                usuarioId,
+                titulo,
+                converterItens(dados.itens())
+            )
+        );
+    }
+
     @PostMapping("/alimentar")
     public PlanoResposta criarAlimentar(
             @RequestParam Long profissionalId,
@@ -85,6 +101,21 @@ public class PlanoController {
                         planoId,
                         converterItens(dados.itens())
                 )
+        );
+    }
+
+    @PutMapping("/{planoId}/usuario")
+    public PlanoResposta alterarTreinoProprio(
+            @PathVariable Integer planoId,
+            @RequestParam @NotNull Long usuarioId,
+            @Valid @RequestBody ItensDados dados) {
+
+        return converterParaResposta(
+            planoService.alterarProprio(
+                usuarioId,
+                planoId,
+                converterItens(dados.itens())
+            )
         );
     }
 

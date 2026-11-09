@@ -125,16 +125,32 @@ public class Acompanhamento {
             );
         }
 
+        String motivoNormalizado = motivo.trim();
+
+        if (motivoNormalizado.length() > 500) {
+            throw new IllegalArgumentException(
+                "O motivo da recusa não pode ultrapassar 500 caracteres."
+            );
+        }
+
         this.status = "RECUSADO";
-        this.motivoRecusa = motivo.trim();
+        this.motivoRecusa = motivoNormalizado;
         this.respondidoEm = LocalDateTime.now();
+    }
+
+    private boolean mesmaIdentidade(Usuario primeiro, Usuario segundo) {
+    return primeiro != null
+        && segundo != null
+        && (primeiro == segundo
+            || (primeiro.getId() != null
+                && primeiro.getId().equals(segundo.getId())));
     }
 
     public void autorizarCompartilhamento(
         UsuarioComum usuario,
         List<String> permissoes) {
 
-        if (usuario == null || !this.usuario.equals(usuario)) {
+        if (usuario == null || !mesmaIdentidade(this.usuario, usuario)) {
             throw new IllegalArgumentException(
                 "Este usuário não pertence ao acompanhamento."
             );
@@ -217,7 +233,7 @@ public class Acompanhamento {
             return false;
         }
 
-        if (!this.profissional.equals(profissional)) {
+        if (!mesmaIdentidade(this.profissional, profissional)) {
             return false;
         }
 
@@ -250,24 +266,28 @@ public class Acompanhamento {
         }
 
         boolean usuarioDoAcompanhamento =
-            this.usuario.equals(autor);
+            autor instanceof UsuarioComum
+            && this.usuario != null
+            && (autor == this.usuario
+                || (autor.getId() != null
+                    && autor.getId().equals(this.usuario.getId())));
 
         boolean profissionalDoAcompanhamento =
-            this.profissional.equals(autor);
+            autor instanceof Profissional
+            && this.profissional != null
+            && (autor == this.profissional
+                || (autor.getId() != null
+                    && autor.getId().equals(this.profissional.getId())));
 
-        boolean administrador = autor instanceof Administrador;
-
-        if (!usuarioDoAcompanhamento
-            && !profissionalDoAcompanhamento
-            && !administrador) {
+        if (!usuarioDoAcompanhamento && !profissionalDoAcompanhamento) {
             throw new IllegalArgumentException(
-                "O autor não pode encerrar este acompanhamento."
+                "Somente o usuário ou profissional participante pode encerrar este acompanhamento."
             );
         }
 
-        if ("ENCERRADO".equals(this.status)) {
+        if (!"ATIVO".equals(this.status)) {
             throw new IllegalStateException(
-                "O acompanhamento já está encerrado."
+                "Somente acompanhamentos ativos podem ser encerrados."
             );
         }
 
@@ -277,10 +297,18 @@ public class Acompanhamento {
             );
         }
 
+        String motivoNormalizado = motivo.trim();
+
+        if (motivoNormalizado.length() > 500) {
+            throw new IllegalArgumentException(
+                "O motivo do encerramento não pode ultrapassar 500 caracteres."
+            );
+        }
+
         this.status = "ENCERRADO";
         this.encerradoPor = autor;
         this.encerradoEm = LocalDateTime.now();
-        this.motivoEncerramento = motivo.trim();
+        this.motivoEncerramento = motivoNormalizado;
     }
 
     private void validarProfissional(Profissional profissional) {
@@ -292,7 +320,7 @@ public class Acompanhamento {
         }
 
         if (!Boolean.TRUE.equals(profissional.getAtivo())
-            || !profissional.estaVerificado()) {
+            || !mesmaIdentidade(this.profissional, profissional)) {
             throw new IllegalStateException(
                 "O profissional precisa estar ativo e verificado."
             );

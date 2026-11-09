@@ -130,7 +130,12 @@ public class Nutricionista extends Profissional {
             ItemPlano itemAtual = itensAtivos.get(i);
             ItemPlano novosDados = orientacoes.get(i);
 
-            plano.alterarItem(itemAtual, novosDados);
+            plano.alterarItem(
+                itemAtual,
+                novosDados,
+                this,
+                acompanhamento
+            );
         }
     }
 

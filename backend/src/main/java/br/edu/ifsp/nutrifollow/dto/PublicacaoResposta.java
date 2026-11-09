@@ -1,4 +1,3 @@
-
 package br.edu.ifsp.nutrifollow.dto;
 
 import java.time.LocalDateTime;
@@ -10,6 +9,7 @@ public record PublicacaoResposta(
         String conteudo,
         Boolean ativa,
         LocalDateTime publicadaEm,
+        LocalDateTime atualizadaEm,
         LocalDateTime inativadaEm,
         String motivoInativacao
 ) {

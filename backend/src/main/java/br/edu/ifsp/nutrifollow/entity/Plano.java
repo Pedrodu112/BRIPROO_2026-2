@@ -63,6 +63,34 @@ public class Plano {
     public void incluirItem(ItemPlano item) {
         validarPlanoAtivo();
 
+        if (id != null) {
+            throw new IllegalStateException(
+                "Para incluir itens em um plano existente, informe o responsável."
+            );
+        }
+
+        adicionarItemValidado(item);
+    }
+
+    public void incluirItem(
+        ItemPlano item,
+        Usuario responsavel,
+        Acompanhamento acompanhamento) {
+
+        validarPlanoAtivo();
+
+        if (!podeSerAlteradoPor(responsavel, acompanhamento)) {
+            throw new IllegalStateException(
+                "O responsável não tem permissão para incluir itens neste plano."
+            );
+        }
+
+        adicionarItemValidado(item);
+
+        registrarAlteracao(responsavel, "Item incluído no plano.");
+    }
+
+    private void adicionarItemValidado(ItemPlano item) {
         if (item == null) {
             throw new IllegalArgumentException("O item é obrigatório.");
         }
@@ -71,6 +99,7 @@ public class Plano {
 
         if (!item.validarConfiguracao()) {
             item.setPlano(null);
+
             throw new IllegalArgumentException(
                 "A configuração do item é inválida."
             );
@@ -78,17 +107,28 @@ public class Plano {
 
         if (Boolean.FALSE.equals(item.getAtivo())) {
             item.setPlano(null);
+
             throw new IllegalArgumentException(
                 "Não é possível incluir um item inativo."
             );
         }
 
         itens.add(item);
-        registrarAlteracao("Item incluído no plano.");
     }
 
-    public void alterarItem(ItemPlano item, ItemPlano novosDados) {
+    public void alterarItem(
+        ItemPlano item,
+        ItemPlano novosDados,
+        Usuario responsavel,
+        Acompanhamento acompanhamento) {
+
         validarPlanoAtivo();
+
+        if (!podeSerAlteradoPor(responsavel, acompanhamento)) {
+            throw new IllegalStateException(
+                "O responsável não tem permissão para alterar este plano."
+            );
+        }
 
         if (item == null || novosDados == null) {
             throw new IllegalArgumentException(
@@ -96,18 +136,30 @@ public class Plano {
             );
         }
 
-        if (!itens.contains(item) || !Boolean.TRUE.equals(item.getAtivo())) {
+        if (!itens.contains(item)
+            || !Boolean.TRUE.equals(item.getAtivo())) {
             throw new IllegalArgumentException(
                 "O item não pertence ao plano ativo."
             );
         }
 
         item.atualizarConfiguracao(novosDados);
-        registrarAlteracao("Item do plano alterado.");
+
+        registrarAlteracao(responsavel, "Item do plano alterado.");
     }
 
-    public void removerItem(ItemPlano item) {
+    public void removerItem(
+        ItemPlano item,
+        Usuario responsavel,
+        Acompanhamento acompanhamento) {
+
         validarPlanoAtivo();
+
+        if (!podeSerAlteradoPor(responsavel, acompanhamento)) {
+            throw new IllegalStateException(
+                "O responsável não tem permissão para remover itens deste plano."
+            );
+        }
 
         if (item == null
             || !itens.contains(item)
@@ -118,7 +170,11 @@ public class Plano {
         }
 
         item.setAtivo(false);
-        registrarAlteracao("Item inativado; histórico preservado.");
+
+        registrarAlteracao(
+            responsavel,
+            "Item inativado; histórico preservado."
+        );
     }
 
     public boolean podeSerAlteradoPor(
@@ -126,36 +182,48 @@ public class Plano {
         Acompanhamento acompanhamento) {
 
         if (autor == null
-            || acompanhamento == null
+            || this.usuario == null
             || !Boolean.TRUE.equals(this.ativo)
             || !Boolean.TRUE.equals(autor.getAtivo())
-            || !Boolean.TRUE.equals(acompanhamento.getUsuario().getAtivo())
-            || !"ATIVO".equals(acompanhamento.getStatus())) {
+            || !Boolean.TRUE.equals(this.usuario.getAtivo())) {
             return false;
         }
 
-        if (!this.usuario.equals(acompanhamento.getUsuario())) {
-            return false;
-        }
-
+        // O proprietário pode alterar somente seus próprios planos de treino.
         if (autor instanceof UsuarioComum) {
-            return this.usuario.equals(autor);
+            return "TREINO".equalsIgnoreCase(this.tipo)
+                && mesmaIdentidade(autor, this.usuario);
         }
 
-        if (autor instanceof Profissional) {
-            Profissional profissional = (Profissional) autor;
-
-            return profissional.estaVerificado()
-                && acompanhamento.getProfissional().equals(profissional)
-                && profissional.podeGerenciarPlano(this.tipo)
-                && acompanhamento.permiteAcesso(
-                    profissional,
-                    this.tipo,
-                    "ALTERAR"
-                );
+        // Profissionais precisam de acompanhamento e autorização.
+        if (!(autor instanceof Profissional profissional)
+            || acompanhamento == null
+            || acompanhamento.getUsuario() == null
+            || acompanhamento.getProfissional() == null
+            || !Boolean.TRUE.equals(
+                acompanhamento.getUsuario().getAtivo())) {
+            return false;
         }
 
-        return false;
+        return mesmaIdentidade(this.usuario, acompanhamento.getUsuario())
+            && mesmaIdentidade(
+                profissional,
+                acompanhamento.getProfissional())
+            && profissional.estaVerificado()
+            && profissional.podeGerenciarPlano(this.tipo)
+            && acompanhamento.permiteAcesso(
+                profissional,
+                this.tipo,
+                "ALTERAR"
+            );
+    }
+
+    private boolean mesmaIdentidade(Usuario primeiro, Usuario segundo) {
+    return primeiro != null
+        && segundo != null
+        && (primeiro == segundo
+            || (primeiro.getId() != null
+                && primeiro.getId().equals(segundo.getId())));
     }
 
     public String descreverResumo() {
@@ -184,9 +252,13 @@ public class Plano {
                 "O autor precisa estar ativo."
             );
         }
+        
+            boolean ehDono =
+                autor instanceof UsuarioComum
+                && mesmaIdentidade(autor, this.usuario);
 
-        boolean ehDono = autor.equals(this.usuario);
-        boolean ehAdministrador = autor instanceof Administrador;
+            boolean ehAdministrador =
+                autor instanceof Administrador;
 
         if (!ehDono && !ehAdministrador) {
             throw new IllegalArgumentException(
@@ -195,7 +267,7 @@ public class Plano {
         }
 
         this.ativo = false;
-        registrarAlteracao("Plano inativado.");
+        registrarAlteracao(autor, "Plano inativado.");
     }
 
     private void validarPlanoAtivo() {
@@ -204,10 +276,38 @@ public class Plano {
         }
     }
 
-    private void registrarAlteracao(String resumo) {
-        this.versao++;
+    private void registrarAlteracao(
+        Usuario responsavel,
+        String resumo) {
+
+        if (responsavel == null
+            || !Boolean.TRUE.equals(responsavel.getAtivo())) {
+            throw new IllegalArgumentException(
+                "O responsável pela alteração precisa estar ativo."
+            );
+        }
+
+        if (resumo == null || resumo.isBlank()) {
+            throw new IllegalArgumentException(
+                "O resumo da alteração é obrigatório."
+            );
+        }
+
+        String resumoNormalizado = resumo.trim();
+
+        if (resumoNormalizado.length() > 1000) {
+            throw new IllegalArgumentException(
+                "O resumo não pode ultrapassar 1000 caracteres."
+            );
+        }
+
+        this.versao = this.versao == null || this.versao < 1
+            ? 1
+            : this.versao + 1;
+
+        this.atualizadoPor = responsavel;
         this.atualizadoEm = LocalDateTime.now();
-        this.resumoUltimaAlteracao = resumo;
+        this.resumoUltimaAlteracao = resumoNormalizado;
     }
 
     public Integer getId() { return id; }

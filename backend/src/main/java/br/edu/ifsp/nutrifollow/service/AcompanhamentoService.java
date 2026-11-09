@@ -8,6 +8,9 @@ import br.edu.ifsp.nutrifollow.entity.UsuarioComum;
 import br.edu.ifsp.nutrifollow.repository.AcompanhamentoRepository;
 import br.edu.ifsp.nutrifollow.repository.UsuarioRepository;
 
+import br.edu.ifsp.nutrifollow.exception.RecursoNaoEncontradoException;
+import br.edu.ifsp.nutrifollow.exception.OperacaoNaoPermitidaException;
+
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -47,8 +50,33 @@ public class AcompanhamentoService {
             );
         }
 
+        if (finalidade == null || finalidade.isBlank()) {
+            throw new IllegalArgumentException(
+                "A finalidade do acompanhamento é obrigatória."
+            );
+        }
+
+        String finalidadeNormalizada = finalidade.trim();
+
+        boolean jaExisteAtivo =
+        acompanhamentoRepository.existsByUsuario_IdAndProfissional_IdAndFinalidadeIgnoreCaseAndStatus(
+            usuario.getId(),
+            profissional.getId(),
+            finalidadeNormalizada,
+            "ATIVO"
+        );
+
+        if (jaExisteAtivo) {
+            throw new IllegalStateException(
+                "Já existe um acompanhamento ativo para este profissional e finalidade."
+            );
+        }
+
         Acompanhamento acompanhamento =
-                usuario.solicitarAcompanhamento(profissional, finalidade);
+            usuario.solicitarAcompanhamento(
+                profissional,
+                finalidadeNormalizada
+            );
 
         return acompanhamentoRepository.save(acompanhamento);
     }
@@ -79,8 +107,8 @@ public class AcompanhamentoService {
         Usuario usuario = buscarUsuarioAtivo(profissionalId);
 
         if (!(usuario instanceof Profissional profissional)) {
-            throw new IllegalArgumentException(
-                    "O usuário informado não é um profissional."
+            throw new OperacaoNaoPermitidaException(
+                "Somente profissionais podem aceitar acompanhamentos."
             );
         }
 
@@ -98,8 +126,8 @@ public class AcompanhamentoService {
         Usuario usuario = buscarUsuarioAtivo(profissionalId);
 
         if (!(usuario instanceof Profissional profissional)) {
-            throw new IllegalArgumentException(
-                    "O usuário informado não é um profissional."
+            throw new OperacaoNaoPermitidaException(
+                "Somente profissionais podem aceitar acompanhamentos."
             );
         }
 
@@ -117,8 +145,8 @@ public class AcompanhamentoService {
         Usuario usuarioEncontrado = buscarUsuarioAtivo(usuarioId);
 
         if (!(usuarioEncontrado instanceof UsuarioComum usuario)) {
-            throw new IllegalArgumentException(
-                    "A autorização deve ser realizada por um usuário comum."
+            throw new OperacaoNaoPermitidaException(
+                "Somente usuários comuns podem autorizar o compartilhamento de dados."
             );
         }
 
@@ -147,9 +175,9 @@ public class AcompanhamentoService {
         }
 
         return acompanhamentoRepository.findById(acompanhamentoId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Acompanhamento não encontrado."
-                ));
+            .orElseThrow(() -> new RecursoNaoEncontradoException(
+                "Acompanhamento não encontrado."
+            ));
     }
 
     private Usuario buscarUsuarioAtivo(Long usuarioId) {
@@ -160,9 +188,9 @@ public class AcompanhamentoService {
         }
 
         Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Usuário não encontrado."
-                ));
+            .orElseThrow(() -> new RecursoNaoEncontradoException(
+                "Usuário não encontrado."
+            ));
 
         if (!Boolean.TRUE.equals(usuario.getAtivo())) {
             throw new IllegalStateException("O usuário está inativo.");

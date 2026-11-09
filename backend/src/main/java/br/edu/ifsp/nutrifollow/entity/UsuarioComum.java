@@ -133,6 +133,12 @@ public class UsuarioComum extends Usuario {
     }
 
     public void removerPublicacaoSalva(Publicacao publicacao) {
+        if (!Boolean.TRUE.equals(getAtivo())) {
+            throw new IllegalStateException(
+                "A conta precisa estar ativa."
+            );
+        }
+
         if (publicacao == null) {
             throw new IllegalArgumentException(
                 "A publicação é obrigatória."

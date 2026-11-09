@@ -15,7 +15,7 @@ public class Administrador extends Usuario {
     public Administrador() {
     }
 
-    public void analisarVerificacao(
+    public void analisarVerificacao(    
         Profissional profissional,
         String decisao,
         String motivo) {
@@ -48,7 +48,10 @@ public class Administrador extends Usuario {
             );
         }
 
-        if (conta == this) {
+            boolean propriaConta = conta == this
+            || (getId() != null && getId().equals(conta.getId()));
+
+        if (propriaConta) {
             throw new IllegalArgumentException(
                 "O administrador não pode inativar a própria conta."
             );
@@ -85,9 +88,9 @@ public class Administrador extends Usuario {
             );
         }
 
-        if (!publicacao.podeSerExibida()) {
+        if (!Boolean.TRUE.equals(publicacao.getAtiva())) {
             throw new IllegalStateException(
-                "A publicação já está indisponível ou seu autor não está verificado."
+                "A publicação já está inativa."
             );
         }
 

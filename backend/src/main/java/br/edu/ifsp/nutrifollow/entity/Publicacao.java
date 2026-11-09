@@ -32,6 +32,7 @@ public class Publicacao {
 
     private LocalDateTime publicadaEm;
     private LocalDateTime inativadaEm;
+    private LocalDateTime atualizadaEm;
 
     @ManyToOne
     @JoinColumn(name = "responsavel_inativacao_id")
@@ -63,7 +64,7 @@ public class Publicacao {
         this.publicadaEm = LocalDateTime.now();
     }
 
-    public void editar(String titulo, String conteudo) {
+        public void editar(String titulo, String conteudo) {
         if (!Boolean.TRUE.equals(this.ativa)) {
             throw new IllegalStateException(
                 "Não é possível editar uma publicação inativa."
@@ -74,6 +75,7 @@ public class Publicacao {
 
         this.titulo = titulo.trim();
         this.conteudo = conteudo.trim();
+        this.atualizadaEm = LocalDateTime.now();
     }
 
     public void inativar(Usuario responsavel, String motivo) {
@@ -90,16 +92,39 @@ public class Publicacao {
             );
         }
 
+        boolean ehAutor =
+            responsavel instanceof Profissional
+            && this.autor != null
+            && responsavel.getId() != null
+            && responsavel.getId().equals(this.autor.getId());
+
+        boolean ehAdministrador =
+            responsavel instanceof Administrador;
+
+        if (!ehAutor && !ehAdministrador) {
+            throw new IllegalStateException(
+                "Somente o autor ou um administrador pode inativar a publicação."
+            );
+        }
+
         if (motivo == null || motivo.isBlank()) {
             throw new IllegalArgumentException(
                 "O motivo da inativação é obrigatório."
             );
         }
 
+        String motivoNormalizado = motivo.trim();
+
+        if (motivoNormalizado.length() > 500) {
+            throw new IllegalArgumentException(
+                "O motivo da inativação não pode ultrapassar 500 caracteres."
+            );
+        }
+
         this.ativa = false;
         this.inativadaEm = LocalDateTime.now();
         this.responsavelInativacao = responsavel;
-        this.motivoInativacao = motivo.trim();
+        this.motivoInativacao = motivoNormalizado;
     }
 
     public boolean podeSerExibida() {
@@ -151,6 +176,9 @@ public class Publicacao {
         return inativadaEm;
     }
 
+    public LocalDateTime getAtualizadaEm() {
+    return atualizadaEm;
+    }
     
     public String getTitulo() {
         return titulo;

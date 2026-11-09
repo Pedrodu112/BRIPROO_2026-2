@@ -72,14 +72,10 @@ public class PublicacaoController {
     @DeleteMapping("/{publicacaoId}")
     public void inativar(
             @PathVariable Long publicacaoId,
-            @RequestParam Long administradorId,
+            @RequestParam Long responsavelId,
             @Valid @RequestBody PublicacaoModeracaoDados dados) {
 
-        publicacaoService.inativar(
-                administradorId,
-                publicacaoId,
-                dados.motivo()
-        );
+        publicacaoService.inativar(responsavelId, publicacaoId, dados.motivo());
     }
 
     private PublicacaoResposta converterParaResposta(
@@ -92,10 +88,9 @@ public class PublicacaoController {
                 publicacao.getConteudo(),
                 publicacao.getAtiva(),
                 publicacao.getPublicadaEm(),
+                publicacao.getAtualizadaEm(),
                 publicacao.getInativadaEm(),
                 publicacao.getMotivoInativacao()
-
-                
         );
 
         
