@@ -400,7 +400,7 @@ export default function NutriFollowApp() {
       "/interacoes/acompanhamento/" +
         selectedFollowId +
         "?usuarioId=" +
-        currentWorkspace.id,
+        workspace.id,
     )
       .then((data) => {
         if (active) setInteractions(data);
