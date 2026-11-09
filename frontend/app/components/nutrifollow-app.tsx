@@ -66,9 +66,8 @@ function permissionsForFinalidade(finalidade: string) {
   ];
 }
 
-function defaultPermissionsForFinalidade(finalidade: string) {
-  const category = finalidade === "NUTRICAO" ? "ALIMENTAR" : "TREINO";
-  return [category + ":CRIAR", category + ":ALTERAR", "INTERACAO:OBSERVACAO"];
+function defaultPermissionsForFinalidade() {
+  return [];
 }
 
 function Glyph({ name, size = 18 }: { name: string; size?: number }) {
@@ -231,7 +230,7 @@ export default function NutriFollowApp() {
     workspace?.role === "EDUCACAO_FISICA";
 
   function selectedPermissionsFor(item: Acompanhamento) {
-    return permissionDrafts[String(item.id)] ?? defaultPermissionsForFinalidade(item.finalidade);
+    return permissionDrafts[String(item.id)] ?? defaultPermissionsForFinalidade();
   }
 
   function toggleFollowupPermission(item: Acompanhamento, permission: string, checked: boolean) {
@@ -804,7 +803,7 @@ export default function NutriFollowApp() {
     } else if (action === "autorizar") {
       const follow = followups.find((item) => item.id === id);
       const selectedPermissions = follow
-        ? (permissionDrafts[String(id)] ?? defaultPermissionsForFinalidade(follow.finalidade))
+        ? (permissionDrafts[String(id)] ?? defaultPermissionsForFinalidade())
         : [];
       if (!selectedPermissions.length) {
         setNotice({ kind: "error", text: "Selecione ao menos uma permissão para compartilhar." });
@@ -1048,8 +1047,33 @@ export default function NutriFollowApp() {
     setPublications([]);
     setInteractions([]);
     setSelectedFollowId("");
+    setEditingRecordId(null);
+    setEditingPlanId(null);
+    setEditingPlanItemIndex(null);
+    setEditingPublicationId(null);
+    setRecordDraft({
+      tipo: "TREINO", descricao: "", tipoRefeicao: "ALMOCO",
+      series: "3", repeticoes: "12", cargaKg: "0",
+      quantidadeMl: "500", pesoKg: "", observacoes: "",
+    });
+    setPlanTitle("");
+    setPlanFollowId("");
+    setItemDraft(emptyPlanItem);
+    setPlanItems([]);
+    setProfessionalId("");
+    setFinalidade("NUTRICAO");
+    setPermissionDrafts({});
+    setPublicationTitle("");
+    setPublicationContent("");
+    setMessageDraft("");
+    setInteractionKind("MENSAGEM");
+    setInteractionDeadline("");
+    setInteractionSituation("PENDENTE");
     setConfirmation(null);
+    setConfirmationReason("");
     setInteractionToEdit(null);
+    setInteractionEditContent("");
+    setInteractionEditDeadline("");
   }
 
   if (!workspace) {
